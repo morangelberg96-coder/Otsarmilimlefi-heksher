@@ -1,0 +1,519 @@
+```html
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אוצר מילים על פי הקשר</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Varela Round', sans-serif;
+            background-color: #fdf2f8; 
+            background-image: radial-gradient(#fbcfe8 2px, transparent 2px), radial-gradient(#fbcfe8 2px, #fdf2f8 2px);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .answer-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            touch-action: manipulation;
+            cursor: pointer;
+        }
+        .answer-btn:active { transform: scale(0.98); }
+        .flower-decoration {
+            position: absolute;
+            opacity: 0.15;
+            z-index: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container-wrapper">
+        <div class="max-w-2xl w-full bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl overflow-hidden fade-in border-4 border-white relative" id="quiz-container">
+            
+            <!-- קישוטים (רקע) -->
+            <svg class="flower-decoration top-0 right-0 w-32 h-32 text-pink-500 transform translate-x-10 -translate-y-10 rotate-12" fill="currentColor" viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z" /></svg>
+            <svg class="flower-decoration bottom-0 left-0 w-40 h-40 text-purple-500 transform -translate-x-10 translate-y-10 -rotate-12" fill="currentColor" viewBox="0 0 24 24"><path d="M12,22C12,22 4,16 4,10C4,5 8,2 12,2C16,2 20,5 20,10C20,16 12,22 12,22Z" /></svg>
+
+            <!-- כותרת -->
+            <div class="bg-gradient-to-r from-pink-500 to-purple-500 p-6 text-white relative z-10">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h1 class="text-2xl font-bold flex items-center gap-2">
+                            <span>🌸</span> אוצר מילים על פי הקשר
+                        </h1>
+                    </div>
+                    <div class="bg-white/20 backdrop-blur px-4 py-2 rounded-full border border-white/30 whitespace-nowrap">
+                        <span id="progress-text" class="font-bold">1 / 20</span>
+                    </div>
+                </div>
+                
+                <!-- כפתורי בחירת ניקוד -->
+                <div class="flex justify-center gap-2 mt-2 bg-white/20 p-1.5 rounded-2xl backdrop-blur-sm border border-white/30 shadow-sm w-fit mx-auto">
+                    <button onclick="setNiqqud('full')" class="niqqud-btn bg-white text-pink-600 shadow-md px-4 py-1.5 rounded-xl text-sm font-bold transition-all focus:outline-none" id="btn-niqqud-full">ניקוד מלא</button>
+                    <button onclick="setNiqqud('partial')" class="niqqud-btn text-white bg-transparent hover:bg-white/20 px-4 py-1.5 rounded-xl text-sm font-bold transition-all focus:outline-none" id="btn-niqqud-partial">ניקוד חלקי</button>
+                    <button onclick="setNiqqud('none')" class="niqqud-btn text-white bg-transparent hover:bg-white/20 px-4 py-1.5 rounded-xl text-sm font-bold transition-all focus:outline-none" id="btn-niqqud-none">ללא ניקוד</button>
+                </div>
+
+                <!-- מד התקדמות -->
+                <div class="w-full bg-black/20 rounded-full h-2 mt-4 overflow-hidden shadow-inner">
+                    <div id="progress-bar-fill" class="bg-white h-2 rounded-full transition-all duration-500 ease-out" style="width: 5%"></div>
+                </div>
+            </div>
+
+            <!-- אזור השאלה -->
+            <div class="p-6 md:p-8 relative z-10">
+                <div class="mb-6">
+                    <h2 id="question-text" class="text-xl md:text-2xl font-medium text-gray-800 leading-relaxed text-center">
+                        <!-- שאלה תוכנס כאן -->
+                    </h2>
+                </div>
+
+                <!-- רשת תשובות -->
+                <div id="answers-container" class="grid gap-3">
+                    <!-- תשובות יוכנסו כאן -->
+                </div>
+
+                <!-- אזור משוב (רמז/הצלחה) -->
+                <div id="feedback-area" class="mt-6 hidden rounded-2xl p-5 border-2 shadow-inner bg-white/50">
+                    <div class="flex items-start">
+                        <div id="feedback-icon" class="text-3xl ml-4"></div>
+                        <div class="flex-1">
+                            <h3 id="feedback-title" class="font-bold text-lg"></h3>
+                            <p id="feedback-text" class="text-gray-700 mt-1"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- תחתית -->
+            <div class="bg-pink-50 px-6 py-4 border-t border-pink-100 text-pink-600 text-sm flex flex-col md:flex-row justify-between items-center relative z-10 gap-3 text-center">
+                <span class="font-medium">יצרה בעזרת בינה מלאכותית- מורן קמיל גלברג, הוראה מותאמת 🌷</span>
+                <span id="score-display" class="font-bold bg-white px-4 py-1.5 rounded-full shadow-sm">ניקוד: 0</span>
+            </div>
+        </div>
+
+        <!-- מסך סיום -->
+        <div id="end-screen" class="hidden max-w-md w-full bg-white/95 backdrop-blur rounded-3xl shadow-xl overflow-hidden text-center p-8 fade-in border-4 border-pink-200 mt-10">
+            <div class="text-7xl mb-4 animate-bounce">💐</div>
+            <h2 class="text-3xl font-bold text-purple-800 mb-2">סיימת את התרגול!</h2>
+            <p class="text-gray-600 mb-6">כל הכבוד, צמחת ולמדת!</p>
+            <div class="text-6xl font-bold text-pink-500 mb-8 drop-shadow-sm" id="final-score">0</div>
+            <button onclick="location.reload()" class="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold py-3 px-10 rounded-full transition shadow-lg w-full transform hover:scale-105">
+                התחל מחדש 🌼
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // מבנה נתונים מלא (עם ניקוד מלא וכתיב מלא כדי שאותיות אהו"י לא יושמטו)
+        const questions = [
+            {
+                question: "לַמְרוֹת שֶׁהַחֲבֵרִים נִיסּוּ *לְהָנִיא* אוֹתוֹ מִכַּוָּונָתוֹ לִקְפּוֹץ בַּנְגִ'י, הוּא הִתְעַקֵּשׁ לְבַצֵּעַ אֶת הַקְּפִיצָה.",
+                hint: "מָה מְנַסִּים חֲבֵרִים מוּדְאָגִים לַעֲשׂוֹת כְּשֶׁמִּישֶׁהוּ רוֹצֶה לַעֲשׂוֹת מַשֶּׁהוּ מְסוּכָּן?",
+                answers: [
+                    { text: "*לִדְחוֹף* וּלְעוֹדֵד", correct: false, rationale: "הַמִּילָּה 'לַמְרוֹת' יוֹצֶרֶת נִיגּוּד – הֵם נִיסּוּ לַעֲשׂוֹת מַשֶּׁהוּ, אַךְ הוּא הִתְעַקֵּשׁ לִקְפּוֹץ." },
+                    { text: "*לְשַׁכְנֵעַ* לֹא לַעֲשׂוֹת", correct: true, rationale: "נָכוֹן! הַחֲבֵרִים נִיסּוּ לִמְנוֹעַ מִמֶּנּוּ אֶת הַמַּעֲשֶׂה, אַךְ הוּא סֵירֵב לְהַקְשִׁיב." },
+                    { text: "*לְצַלֵּם* וּלְתַעֵד", correct: false, rationale: "אֵין הֶקְשֵׁר שֶׁל תִּיעוּד, אֶלָּא שֶׁל נִיסָּיוֹן הַשְׁפָּעָה עַל הַהַחְלָטָה." },
+                    { text: "*לְהִצְטָרֵף* אֵלָיו", correct: false, rationale: "הַהֶקְשֵׁר הוּא שֶׁל הִתְנַגְּדוּת לַמַּעֲשֶׂה, לֹא שֶׁל הִצְטָרְפוּת." }
+                ]
+            },
+            {
+                question: "הַהַחְלָטָה לֹא הָיְתָה מַעֲשִׂית, אֶלָּא תֵּיאוֹרֵטִית *גְּרֵידָא*, וְלָכֵן לֹא יוּשְׂמָה בַּשֶּׁטַח.",
+                hint: "מִילָּה נִרְדֶּפֶת לְ'אַךְ וְרַק'.",
+                answers: [
+                    { text: "*בִּלְבַד*, רַק", correct: true, rationale: "מְצוּיָּן! הַמִּשְׁפָּט מַדְגִּישׁ שֶׁהַהַחְלָטָה נִשְׁאֲרָה בְּרָמַת הַתֵּיאוֹרְיָה בִּלְבַד." },
+                    { text: "*מְסוּבֶּכֶת* וּמוּרְכֶּבֶת", correct: false, rationale: "הַנִּיגּוּד הוּא בֵּין תֵּיאוֹרְיָה לְיִישּׂוּם, לֹא בֵּין פַּשְׁטוּת לְמוּרְכָּבוּת." },
+                    { text: "*חֲשׁוּבָה* וּדְחוּפָה", correct: false, rationale: "אִם הִיא לֹא יוּשְׂמָה, כַּנִּרְאֶה שֶׁהַדְּחִיפוּת אֵינָהּ הָעִנְיָין הַמֶּרְכָּזִי כָּאן." },
+                    { text: "*שְׁגוּיָה* וּמוּטְעֵית", correct: false, rationale: "הֱיוֹתָהּ תֵּיאוֹרֵטִית לֹא הוֹפֵךְ אוֹתָהּ בְּהֶכְרֵחַ לִשְׁגוּיָה." }
+                ]
+            },
+            {
+                question: "הַמָּתֵמָטִיקָה תָּמִיד הָיְתָה *עֲקֵב אַכִילֵס* שֶׁלּוֹ, בְּעוֹד שֶׁבִּשְׁאָר הַמִּקְצוֹעוֹת הוּא הִצְטַיֵּין.",
+                hint: "בַּמִּיתוֹלוֹגְיָה, אַכִילֵס הָיָה גִּיבּוֹר חָסִין מִלְּבַד נְקוּדָּה אַחַת בְּגוּפוֹ.",
+                answers: [
+                    { text: "נְקוּדַּת *הַחוֹזֶק*", correct: false, rationale: "הַמִּשְׁפָּט יוֹצֵר נִיגּוּד ('בְּעוֹד שֶׁ...') בֵּין הַמָּתֵמָטִיקָה לְבֵין הַמִּקְצוֹעוֹת בָּהֶם הִצְטַיֵּין." },
+                    { text: "*תַּחְבִּיב* אָהוּב", correct: false, rationale: "הַהֶקְשֵׁר עוֹסֵק בִּיכוֹלֶת וְהִצְטַיְּינוּת, לֹא בְּאַהֲבָה לְמִקְצוֹעַ." },
+                    { text: "נְקוּדַּת *הַתּוּרְפָּה*", correct: true, rationale: "בְּדִיּוּק. הַנִּיגּוּד לְהִצְטַיְּינוּת בִּשְׁאָר הַמִּקְצוֹעוֹת מְרַמֵּז שֶׁזּוֹהִי הַחוּלְשָׁה שֶׁלּוֹ." },
+                    { text: "*מָקוֹר* לְגַאֲוָוה", correct: false, rationale: "לָרוֹב לֹא מִתְגָּאִים בְּמַשֶּׁהוּ שֶׁהוּא בְּנִיגּוּד לַהִצְטַיְּינוּת הַכְּלָלִית." }
+                ]
+            },
+            {
+                question: "הַמְּשׁוֹרֵר הָלַךְ לְעוֹלָמוֹ *בִּדְמִי יָמָיו*, וְהִשְׁאִיר אַחֲרָיו יְצִירוֹת רַבּוֹת שֶׁלֹּא הִסְפִּיק לְסַיֵּים.",
+                hint: "הַמִּילָּה 'דְּמִי' קְשׁוּרָה לְדָם זוֹרֵם וּלְחִיּוּנִיּוּת.",
+                answers: [
+                    { text: "בְּשֵׂיבָה *טוֹבָה* וְזִקְנָה", correct: false, rationale: "הָעוּבְדָּה שֶׁלֹּא הִסְפִּיק לְסַיֵּים יְצִירוֹת מְרַמֶּזֶת עַל מָוֶות מוּקְדָּם." },
+                    { text: "בִּצְעִירוּתוֹ, בְּמֵיטַב *שְׁנוֹתָיו*", correct: true, rationale: "נָכוֹן. הַבִּיטּוּי מְתָאֵר חַיִּים שֶׁנִּגְדְּעוּ בְּאֶמְצָעָם, כְּשֶׁהָאָדָם בְּשִׂיא כּוֹחוֹ." },
+                    { text: "לְאַחַר מַחֲלָה *מוּמְשֶׁכֶת*", correct: false, rationale: "הַבִּיטּוּי מִתְיַיחֵס לְגִיל וּלְשָׁלָב בַּחַיִּים, לֹא לְסִיבַּת הַמָּוֶות." },
+                    { text: "בִּזְמַן *שֶׁיָּשַׁן*", correct: false, rationale: "אֵין קֶשֶׁר לְשֵׁינָה, אֶלָּא לְעִיתּוּי הַמָּוֶות בְּמַהֲלַךְ הַחַיִּים." }
+                ]
+            },
+            {
+                question: "אִי אֶפְשָׁר הָיָה לִשְׁמוֹעַ אֶת הַשִּׂיחָה בִּגְלַל הַ*שָּׁאוֹן* שֶׁעָלָה מֵהָרְחוֹב הַסּוֹאֵן.",
+                hint: "מָה הַדָּבָר הָעִיקָּרִי שֶׁמַּפְרִיעַ לָנוּ לִשְׁמוֹעַ?",
+                answers: [
+                    { text: "*רֵיחַ* רַע", correct: false, rationale: "רֵיחַ לֹא מַפְרִיעַ לִשְׁמִיעָה." },
+                    { text: "*רַעַשׁ* וַהֲמוּלָּה", correct: true, rationale: "נָכוֹן מְאוֹד! רְחוֹב סוֹאֵן מְיַיצֵּר רַעַשׁ שֶׁמַּפְרִיעַ לִשְׁמוֹעַ שִׂיחוֹת." },
+                    { text: "*עָשָׁן* סָמִיךְ", correct: false, rationale: "עָשָׁן מַפְרִיעַ לִרְאִיָּיה, לֹא לִשְׁמִיעָה." },
+                    { text: "*מוּזִיקָה* שְׁקֵטָה", correct: false, rationale: "מוּזִיקָה שְׁקֵטָה לֹא הָיְתָה מוֹנַעַת שְׁמִיעַת שִׂיחָה." }
+                ]
+            },
+            {
+                question: "בְּטוֹפֶס הַהַרְשָׁמָה הוּא נִדְרַשׁ לְצַיֵּין אֶת *מִשְׁלַח יָדוֹ* וְאֶת גּוֹבַהּ הַכְנָסָתוֹ הַחוֹדְשִׁית.",
+                hint: "בַּמֶּה אָדָם 'שׁוֹלֵחַ אֶת יָדוֹ' כְּדֵי לְהִתְפַּרְנֵס?",
+                answers: [
+                    { text: "*כְּתוֹבֶת* מְגוּרָיו", correct: false, rationale: "כְּתוֹבֶת לֹא קְשׁוּרָה יְשִׁירוֹת לְהַכְנָסָה שֶׁל עֲבוֹדָה." },
+                    { text: "*תַּחְבִּיבָיו*", correct: false, rationale: "תַּחְבִּיבִים לָרוֹב לֹא מְצוּיָּנִים לְצַד שְׁאֵלוֹת עַל הַכְנָסָה." },
+                    { text: "*מִקְצוֹעוֹ*, עִיסּוּקוֹ", correct: true, rationale: "יָפֶה. זֶהוּ הַמָּקוֹר לַהַכְנָסָה הַחוֹדְשִׁית הַמּוּזְכֶּרֶת." },
+                    { text: "מַצָּב *מִשְׁפַּחְתִּי*", correct: false, rationale: "מַצָּב מִשְׁפַּחְתִּי הוּא פְּרָט נִפְרָד שֶׁאֵינוֹ קָשׁוּר יְשִׁירוֹת לְהַכְנָסָה." }
+                ]
+            },
+            {
+                question: "כָּל חַבְרֵי הַוַּעֲדָה הָיוּ *תְּמִימֵי דֵּעִים* לְגַבֵּי הַזּוֹכֶה, וְלֹא נִרְשְׁמָה אֲפִילּוּ הִתְנַגְּדוּת אַחַת.",
+                hint: "כְּשֶׁהַדֵּעָה שֶׁל כּוּלָּם 'תְּמִימָה' (שְׁלֵמָה) וַאֲחִידָה.",
+                answers: [
+                    { text: "*חֲלוּקִים* בְּדַעְתָּם", correct: false, rationale: "אִם לֹא נִרְשְׁמָה הִתְנַגְּדוּת, הֵם לֹא הָיוּ חֲלוּקִים." },
+                    { text: "*מַסְכִּימִים* לַחֲלוּטִין", correct: true, rationale: "בְּדִיּוּק! הֵיעָדֵר הִתְנַגְּדוּת מֵעִיד עַל הַסְכָּמָה מְלֵאָה בֵּין כּוּלָּם." },
+                    { text: "*אֲדִישִׁים* לַתּוֹצָאָה", correct: false, rationale: "חַבְרֵי וַעֲדָה צְרִיכִים לְהַחְלִיט, אֲדִישׁוּת לֹא מַתְאִימָה כָּאן." },
+                    { text: "*כּוֹעֲסִים* וּמְאוּכְזָבִים", correct: false, rationale: "אֵין רֶמֶז לִרְגָשׁוֹת שְׁלִילִיִּים, אֶלָּא לְאַחְדוּת בַּהַחְלָטָה." }
+                ]
+            },
+            {
+                question: "הַחְלָטַת הַשּׁוֹפֵט הָיְתָה *כָּלָה וְנֶחֱרָצָה*, וְלֹא הָיָה נִיתָּן לְעַרְעֵר עָלֶיהָ עוֹד.",
+                hint: "מַשֶּׁהוּ שֶׁנִּגְמַר ('כָּלָה') וְנֶחְתַּךְ ('נֶחֱרַץ').",
+                answers: [
+                    { text: "*מְהַסֶּסֶת* וְלֹא בְּרוּרָה", correct: false, rationale: "חוֹסֶר הַיְּכוֹלֶת לְעַרְעֵר מֵעִיד עַל הַחְלָטָה בְּרוּרָה וְסוֹפִית." },
+                    { text: "*סוֹפִית* וּמוּחְלֶטֶת", correct: true, rationale: "נָכוֹן מְאוֹד. כְּשֶׁאִי אֶפְשָׁר לְשַׁנּוֹת אוֹ לְעַרְעֵר עַל מַשֶּׁהוּ, הוּא סוֹפִי." },
+                    { text: "*זְמַנִּית* וַאֲרָעִית", correct: false, rationale: "הַחְלָטָה זְמַנִּית בְּדֶרֶךְ כְּלַל נִיתֶּנֶת לְשִׁינּוּי." },
+                    { text: "*שְׁגוּיָה* וּמְעוּוֶּתֶת", correct: false, rationale: "אֵין בִּיקּוֹרֶת עַל נְכוֹנוּת הַהַחְלָטָה, אֶלָּא עַל הַסּוֹפִיּוּת שֶׁלָּהּ." }
+                ]
+            },
+            {
+                question: "הַמְּנַהֵל הֶחְלִיט *לְשָׁרֵשׁ* אֶת תּוֹפָעַת הָאִיחוּרִים וְנָקַט בְּצַעֲדִים מִשְׁמַעְתִּיִּים חֲרִיפִים.",
+                hint: "מָה עוֹשִׂים לַעֲשָׂבִים שׁוֹטִים בַּגִּינָּה?",
+                answers: [
+                    { text: "לַעֲקוֹר *מֵהַשּׁוֹרֶשׁ*, לְחַסֵּל", correct: true, rationale: "מְצוּיָּן. נְקִיטַת צְעָדִים חֲרִיפִים נוֹעֲדָה לְהַעְלִים אֶת הַתּוֹפָעָה לַחֲלוּטִין." },
+                    { text: "*לְטַפֵּחַ* וּלְגַדֵּל", correct: false, rationale: "מְנַהֵל לֹא יִרְצֶה לְטַפֵּחַ תּוֹפָעָה שְׁלִילִית כְּמוֹ אִיחוּרִים." },
+                    { text: "*לְהִתְעַלֵּם* וּלְהַזְנִיחַ", correct: false, rationale: "נְקִיטַת צְעָדִים הִיא הַפְּעוּלָּה הַהֲפוּכָה מֵהִתְעַלְּמוּת." },
+                    { text: "*לְתַעֵד* וְלִרְשׁוֹם", correct: false, rationale: "הַמַּטָּרָה הִיא לֹא רַק הָרִישּׁוּם, אֶלָּא הַפְסָקַת הַתּוֹפָעָה." }
+                ]
+            },
+            {
+                question: "הַשּׁוּק הָיָה *סַסְגּוֹנִי* וּמָלֵא חַיִּים, עִם דּוּכָנִים בִּצְבָעִים שׁוֹנִים וְרֵיחוֹת תַּבְלִינִים.",
+                hint: "הַמִּילָּה מַזְכִּירָה אֶת הַמִּילָּה 'גָּווֶן' (צֶבַע).",
+                answers: [
+                    { text: "*אָפוֹר* וּמְשַׁעֲמֵם", correct: false, rationale: "תֵּיאוּר הַצְּבָעִים הַשּׁוֹנִים סוֹתֵר אָפוֹר וְשִׁיעֲמוּם." },
+                    { text: "*רַב-גּוֹנִי* וְצִבְעוֹנִי", correct: true, rationale: "נָכוֹן! הַמִּילָּה מְתָאֶרֶת מִגְוַון צְבָעִים ('גְּוָונִים')." },
+                    { text: "*שָׁקֵט* וְרָגוּעַ", correct: false, rationale: "שׁוּק מָלֵא חַיִּים אֵינוֹ שָׁקֵט." },
+                    { text: "*נָקִי* וּמְסוּדָּר", correct: false, rationale: "הַדָּגֵשׁ הוּא עַל הַצִּבְעוֹנִיּוּת וְהַחִיּוּנִיּוּת, לֹא עַל הַסֵּדֶר." }
+                ]
+            },
+            {
+                question: "לְצַעֲרִי *נִבְצַר* מִמֶּנִּי לְהַגִּיעַ לַמְּסִיבָּה עֵקֶב מַחֲלָה פִּתְאוֹמִית.",
+                hint: "כְּמוֹ מִבְצָר שֶׁסָּגוּר וְאִי אֶפְשָׁר לָצֵאת אוֹ לְהִיכָּנֵס אֵלָיו.",
+                answers: [
+                    { text: "*הִתְאַפְשֵׁר* לִי בְּקַלּוּת", correct: false, rationale: "הַמַּחֲלָה הַפִּתְאוֹמִית הִיא סִיבָּה לְאִי-הַגָּעָה, לֹא לְהַגָּעָה קַלָּה." },
+                    { text: "*לֹא הִתְאַפְשֵׁר* לִי", correct: true, rationale: "בְּדִיּוּק. הַסִּיבָּה (מַחֲלָה) מַסְבִּירָה מַדּוּעַ הַפְּעוּלָּה לֹא יָכְלָה לְהִתְבַּצֵּעַ." },
+                    { text: "*הִתְחַשֵּׁק* לִי מְאוֹד", correct: false, rationale: "הַמִּשְׁפָּט מְתָאֵר יְכוֹלֶת (אוֹ חוֹסֶר יְכוֹלֶת) וְלֹא רָצוֹן." },
+                    { text: "*שָׁכַחְתִּי* לְגַמְרֵי", correct: false, rationale: "הַסִּיבָּה הִיא מַחֲלָה, לֹא שִׁכְחָה." }
+                ]
+            },
+            {
+                question: "הַצִּיפּוֹרִים הִסְתַּתְּרוּ בֵּין הָ*עַלְוָה* הַצְּפוּפָה שֶׁל הָעֵץ, כָּךְ שֶׁקָּשֶׁה הָיָה לְהַבְחִין בָּהֶן.",
+                hint: "מָה מְכַסֶּה אֶת עַנְפֵי הָעֵץ וְיָרוֹק בְּדֶרֶךְ כְּלַל?",
+                answers: [
+                    { text: "*שׁוֹרָשִׁים* עֲמוּקִּים", correct: false, rationale: "צִיפּוֹרִים בְּדֶרֶךְ כְּלַל לֹא מִסְתַּתְּרוֹת בַּשּׁוֹרָשִׁים מִתַּחַת לָאֲדָמָה." },
+                    { text: "*גֶּזַע* מְחוּסְפָּס", correct: false, rationale: "קָשֶׁה לְהִסְתַּתֵּר בְּתוֹךְ גֶּזַע, וְהַתֵּיאוּר הוּא שֶׁל מַשֶּׁהוּ 'צָפוּף'." },
+                    { text: "כְּלַל *הֶעָלִים* עַל הָעֵץ", correct: true, rationale: "נָכוֹן. עָלִים צְפוּפִים הֵם מְקוֹם מִסְתּוֹר קְלָאסִי הַמַּקְשֶׁה עַל הָרְאִיָּיה." },
+                    { text: "*פֵּירוֹת* בְּשֵׁלִים", correct: false, rationale: "פֵּירוֹת אֵינָם יוֹצְרִים מִסְתּוֹר צָפוּף כְּמוֹ עָלִים." }
+                ]
+            },
+            {
+                question: "הוּא הֶחְלִיט *לְהִתְעַמֵּת* עִם שְׁכֵנוֹ עַל הָרַעַשׁ, בִּמְקוֹם לְהַמְשִׁיךְ לִסְבּוֹל בְּשֶׁקֶט.",
+                hint: "לַעֲמוֹד מוּל מִישֶׁהוּ (עִימּוּת).",
+                answers: [
+                    { text: "*לְהִתְעַלֵּם* וּלְהַבְלִיג", correct: false, rationale: "הַהֵפֶךְ מִ'לִּסְבּוֹל בְּשֶׁקֶט' הוּא לַעֲשׂוֹת מַעֲשֶׂה אַקְטִיבִי." },
+                    { text: "*לְהִתְחַבֵּר* וּלְהִתְיַידֵּד", correct: false, rationale: "הַהֶקְשֵׁר שֶׁל תְּלוּנָה עַל רַעַשׁ הוּא שְׁלִילִי, לֹא חַבְרִי." },
+                    { text: "לַעֲמוֹד מוּלוֹ *בְּוִיכּוּחַ*", correct: true, rationale: "יָפֶה. עִימּוּת הוּא מִפְגָּשׁ יָשִׁיר כְּדֵי לִפְתּוֹר בְּעָיָה." },
+                    { text: "*לִבְרוֹחַ* מֵהַמָּקוֹם", correct: false, rationale: "הוּא בָּחַר לִפְעוֹל מוּל הַשָּׁכֵן, לֹא לַעֲזוֹב." }
+                ]
+            },
+            {
+                question: "רֹאשׁ הָעִיר הִכְרִיז *קְבַל עָם וְעֵדָה* עַל פְּרִישָׁתוֹ, בִּנְאוּם שֶׁשּׁוּדַּר לְכָל הַתּוֹשָׁבִים.",
+                hint: "מוּל הָ'עָם' וּמוּל הָ'עֵדָה' (הַקְּהִילָּה).",
+                answers: [
+                    { text: "*בַּסֵּתֶר*, בְּחַדְרֵי חֲדָרִים", correct: false, rationale: "נְאוּם שֶׁמְּשׁוּדָּר לְכוּלָּם הוּא הַהֵפֶךְ הַגָּמוּר מִסּוֹדִיּוּת." },
+                    { text: "*בִּלְחִישָׁה* שְׁקֵטָה", correct: false, rationale: "הַכְרָזָה לַצִּיבּוּר לֹא נַעֲשֵׂית בִּלְחִישָׁה." },
+                    { text: "בְּאוֹפֶן *פּוּמְבִּי*, בִּפְנֵי כּוּלָּם", correct: true, rationale: "נָכוֹן! הַבִּיטּוּי מְתָאֵר מַעֲמָד צִיבּוּרִי רָחָב." },
+                    { text: "בְּאֶמְצָעוּת *מִכְתָּב* אֲנוֹנִימִי", correct: false, rationale: "רֹאשׁ הָעִיר הִכְרִיז בִּנְאוּם, כָּךְ שֶׁזֶּהוּתוֹ גְּלוּיָה." }
+                ]
+            },
+            {
+                question: "גַּם בִּתְנָאֵי הַשֶּׁבִי הַקָּשִׁים, הוּא שָׁמַר עַל *צֶלֶם אֱנוֹשׁ* וְדָאַג לַחֲבֵרָיו הַחַלָּשִׁים.",
+                hint: "לְהִתְנַהֵג כְּמוֹ בֵּן אָדָם וְלֹא כְּמוֹ חַיָּה.",
+                answers: [
+                    { text: "כּוֹחַ *פִיזִי* רַב", correct: false, rationale: "הַדְּאָגָה לַחַלָּשִׁים מְעִידָה עַל מוּסָרִיּוּת, לֹא עַל כּוֹחַ שְׁרִירִים." },
+                    { text: "*כָּבוֹד* וּמוּסָרִיּוּת אֱנוֹשִׁית", correct: true, rationale: "מְצוּיָּן. הַיְּכוֹלֶת לְהִישָּׁאֵר אֱנוֹשִׁי וְטוֹב לֵב גַּם בְּמַצָּב קָשֶׁה." },
+                    { text: "*תְּמוּנוֹת* שֶׁל מִשְׁפַּחְתּוֹ", correct: false, rationale: "הַבִּיטּוּי הוּא מֵטָאפוֹרִי לְאוֹפִי הָאָדָם, לֹא לִתְמוּנוֹת פִיזִיּוֹת." },
+                    { text: "*רְכוּשׁ* וָכֶסֶף", correct: false, rationale: "בַּשֶּׁבִי אֵין בְּדֶרֶךְ כְּלַל רְכוּשׁ, וְהַדָּגֵשׁ הוּא עַל הִתְנַהֲגוּת." }
+                ]
+            },
+            {
+                question: "הִתְנַהֲגוּתָם הַפְּרוּעָה שֶׁל הַתַּלְמִידִים עוֹרְרָה *מוֹרַת רוּחַ* בְּקֶרֶב הַמּוֹרִים וְהַהוֹרִים.",
+                hint: "מַשֶּׁהוּ שֶׁגּוֹרֵם לָרוּחַ (לְמַצַּב הָרוּחַ) לִהְיוֹת 'מָרָה' (לֹא טוֹבָה).",
+                answers: [
+                    { text: "*שִׂמְחָה* וְהִתְלַהֲבוּת", correct: false, rationale: "הִתְנַהֲגוּת פְּרוּעָה לֹא גּוֹרֶמֶת לְשִׂמְחָה אֵצֶל מוֹרִים." },
+                    { text: "אִי *שְׂבִיעוּת רָצוֹן*, כַּעַס", correct: true, rationale: "נָכוֹן. תְּגוּבָה שְׁלִילִית הֶגְיוֹנִית לְהִתְנַהֲגוּת לֹא רְאוּיָה." },
+                    { text: "*סַקְרָנוּת* וְעִנְיָין", correct: false, rationale: "הִתְנַהֲגוּת פְּרוּעָה דּוֹרֶשֶׁת טִיפּוּל, לֹא סַקְרָנוּת." },
+                    { text: "*עֲיֵיפוּת* וְשִׁיעֲמוּם", correct: false, rationale: "הִתְנַהֲגוּת פְּרוּעָה יוֹצֶרֶת רַעַשׁ, לֹא שִׁיעֲמוּם." }
+                ]
+            },
+            {
+                question: "הַצּוֹלְלָן הִצְלִיחַ *לִשְׁלוֹת* מִמַּעֲמַקֵּי הַיָּם פְּנִינָה נְדִירָה וִיקָרָה.",
+                hint: "כְּמוֹ 'לִמְשׁוֹת' מִן הַמַּיִם.",
+                answers: [
+                    { text: "*לְהַחְבִּיא* וּלְהַסְתִּיר", correct: false, rationale: "הוּא מָצָא אֶת הַפְּנִינָה וְהֵבִיא אוֹתָהּ, לֹא הֶחְבִּיא אוֹתָהּ." },
+                    { text: "*לִצְבּוֹעַ* וּלְקַשֵּׁט", correct: false, rationale: "פְּעוּלַּת הַצּוֹלְלָן הִיא הוֹצָאָה מֵהַיָּם, לֹא אָמָּנוּת." },
+                    { text: "*לְהוֹצִיא* מִתּוֹךְ נוֹזֵל", correct: true, rationale: "בְּדִיּוּק. פְּעוּלָּה שֶׁל הוֹצָאַת חֵפֶץ מִתּוֹךְ מַיִם." },
+                    { text: "*לִשְׁבּוֹר* וּלְהֲרוֹס", correct: false, rationale: "פְּנִינָה הִיא יְקָרָה, הַמַּטָּרָה הִיא לְהַשִּׂיג אוֹתָהּ שְׁלֵמָה." }
+                ]
+            },
+            {
+                question: "הַשּׁוֹטֵר *הִתְרָה* בַּנֶּהָג הַצָּעִיר שֶׁאִם יַמְשִׁיךְ לִנְסוֹעַ מַהֵר, רִישְׁיוֹנוֹ יִישָּׁלֵל.",
+                hint: "לָתֵת הַתְרָאָה.",
+                answers: [
+                    { text: "*שִׁיבֵּחַ* וּבֵירֵךְ", correct: false, rationale: "אִיּוּם בִּשְׁלִילַת רִישָׁיוֹן אֵינוֹ שֶׁבַח." },
+                    { text: "*הִזְהִיר*", correct: true, rationale: "נָכוֹן מְאוֹד. מַתַּן הַתְרָאָה לִפְנֵי עֲנִישָׁה." },
+                    { text: "*הִתִּיר* וְהִרְשָׁה", correct: false, rationale: "'הִתִּיר' זֶה לְהַרְשׁוֹת, וְ'הִתְרָה' זֶה לְהַזְהִיר." },
+                    { text: "*הִתְעַלֵּם*", correct: false, rationale: "הַשּׁוֹטֵר דִּיבֵּר אִיתּוֹ וְאִיֵּים בְּעוֹנֶשׁ, הוּא לֹא הִתְעַלֵּם." }
+                ]
+            },
+            {
+                question: "הוּא לֹא פָּגַע בָּרֶכֶב הַשֵּׁנִי בְּטָעוּת, אֶלָּא בְּ*זָדוֹן*, מִתּוֹךְ רָצוֹן לִגְרוֹם נֶזֶק.",
+                hint: "פְּעוּלָּה שֶׁנַּעֲשֵׂית 'בְּמֵזִיד' (בְּכַוָּונָה לְהָרַע).",
+                answers: [
+                    { text: "בְּחוֹסֶר *תְּשׂוּמַת לֵב*", correct: false, rationale: "הַמִּשְׁפָּט אוֹמֵר בִּמְפוֹרָשׁ 'לֹא בְּטָעוּת'." },
+                    { text: "בְּכַוָּונָה *רָעָה*", correct: true, rationale: "נָכוֹן. פְּעוּלָּה שֶׁנַּעֲשֵׂית כְּדֵי לְהַזִּיק בְּכַוָּונָה תְּחִילָּה." },
+                    { text: "בִּמְהִירוּת *רַבָּה*", correct: false, rationale: "הַדָּגֵשׁ הוּא עַל הַכַּוָּונָה לְהַזִּיק וְלֹא עַל הַמְּהִירוּת." },
+                    { text: "בְּ*פַחַד*", correct: false, rationale: "רָצוֹן לִגְרוֹם נֶזֶק מֵעִיד עַל תּוֹקְפָנוּת, לֹא עַל פַּחַד." }
+                ]
+            },
+            {
+                question: "כְּשֶׁרָאָה אֶת הַיֶּלֶד הַבּוֹכֶה בָּרְחוֹב, *נִכְמְרוּ רַחֲמָיו* וְהוּא נִיגַּשׁ לַעֲזוֹר לוֹ מִיָּד.",
+                hint: "הָרֶגֶשׁ שֶׁעוֹלֶה כְּשֶׁרוֹאִים מִישֶׁהוּ מִסְכֵּן.",
+                answers: [
+                    { text: "הִתְעוֹרֵר בּוֹ *כַּעַס*", correct: false, rationale: "מִי שֶׁכּוֹעֵס לֹא נִיגַּשׁ לַעֲזוֹר לְיֶלֶד בּוֹכֶה בְּדֶרֶךְ כְּלַל." },
+                    { text: "הִתְעוֹרְרָה בּוֹ *חֶמְלָה*", correct: true, rationale: "מְצוּיָּן. הַתְּגוּבָה שֶׁל עֶזְרָה לְיֶלֶד נוֹבַעַת מֵרַחֲמִים." },
+                    { text: "הוּא *נִבְהַל* וּבָרַח", correct: false, rationale: "הוּא 'נִיגַּשׁ לַעֲזוֹר', לֹא בָּרַח." },
+                    { text: "הוּא *צָחַק* בְּקוֹל", correct: false, rationale: "סִיטּוּאַצְיָה שֶׁל יֶלֶד בּוֹכֶה לֹא מְעוֹרֶרֶת צְחוֹק." }
+                ]
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answeredCorrectly = false;
+        let autoAdvanceTimeout;
+        let niqqudLevel = 'full'; // ברירת מחדל: מלא, חלקי או ללא
+
+        const questionEl = document.getElementById('question-text');
+        const answersContainer = document.getElementById('answers-container');
+        const feedbackArea = document.getElementById('feedback-area');
+        const feedbackTitle = document.getElementById('feedback-title');
+        const feedbackText = document.getElementById('feedback-text');
+        const feedbackIcon = document.getElementById('feedback-icon');
+        const progressText = document.getElementById('progress-text');
+        const progressBarFill = document.getElementById('progress-bar-fill');
+        const scoreDisplay = document.getElementById('score-display');
+        const quizContainer = document.getElementById('quiz-container');
+        const endScreen = document.getElementById('end-screen');
+        const finalScore = document.getElementById('final-score');
+
+        // פונקציה חכמה לטיפול בניקוד וכוכביות
+        function formatText(text, isQuestion) {
+            if (!text) return "";
+            let result = text;
+            
+            if (niqqudLevel === 'full') {
+                // שומרים את כל הניקוד
+            } else if (niqqudLevel === 'none') {
+                // מסירים ניקוד (תווי יוניקוד של ניקוד עברי בלבד) - שומר על אהו"י
+                result = result.replace(/[\u0591-\u05C7]/g, '');
+            } else if (niqqudLevel === 'partial') {
+                // מסירים ניקוד בכל מקום פרט למילים שעטופות בכוכביות
+                result = result.replace(/(\*[^*]+\*)|([^*]+)/g, function(match, p1, p2) {
+                    if (p1) return p1; // משאיר כוכביות וניקוד
+                    if (p2) return p2.replace(/[\u0591-\u05C7]/g, ''); // מסיר ניקוד
+                    return match;
+                });
+            }
+
+            // עיצוב כוכביות
+            if (isQuestion) {
+                // מדגיש את המילה בשאלה
+                result = result.replace(/\*([^*]+)\*/g, '<span class="text-pink-600 font-bold text-2xl px-1">$1</span>');
+            } else {
+                // בתשובות או רמזים - רק מסיר את הכוכביות לאחר הטיפול בניקוד
+                result = result.replace(/\*/g, '');
+            }
+            
+            return result;
+        }
+
+        // בחירת רמת הניקוד
+        window.setNiqqud = function(level) {
+            niqqudLevel = level;
+            
+            // עדכון כפתורים
+            const btns = document.querySelectorAll('.niqqud-btn');
+            btns.forEach(btn => {
+                btn.classList.remove('bg-white', 'text-pink-600', 'shadow-md');
+                btn.classList.add('text-white', 'bg-transparent', 'hover:bg-white/20');
+            });
+            
+            const activeBtn = document.getElementById(`btn-niqqud-${level}`);
+            activeBtn.classList.remove('text-white', 'bg-transparent', 'hover:bg-white/20');
+            activeBtn.classList.add('bg-white', 'text-pink-600', 'shadow-md');
+            
+            // טעינה מחדש של הטקסטים
+            if (!answeredCorrectly) {
+                loadQuestion();
+            }
+        };
+
+        function initQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            setNiqqud('full'); // קובע התחלה עם ניקוד מלא
+        }
+
+        function loadQuestion() {
+            const q = questions[currentQuestionIndex];
+            answeredCorrectly = false;
+            
+            // עדכון ממשק משתמש
+            questionEl.innerHTML = formatText(q.question, true);
+            progressText.innerText = `${currentQuestionIndex + 1} / ${questions.length}`;
+            scoreDisplay.innerText = `ניקוד: ${score}`;
+            
+            // עדכון פס התקדמות
+            const progressPercentage = ((currentQuestionIndex + 1) / questions.length) * 100;
+            progressBarFill.style.width = `${progressPercentage}%`;
+            
+            // איפוס אזור משוב
+            feedbackArea.classList.add('hidden');
+            
+            // יצירת תשובות
+            answersContainer.innerHTML = '';
+            
+            // ערבוב התשובות
+            const shuffledAnswers = [...q.answers].sort(() => Math.random() - 0.5);
+
+            shuffledAnswers.forEach((answer) => {
+                const btn = document.createElement('button');
+                btn.className = "answer-btn w-full text-right bg-white border-2 border-pink-100 p-4 rounded-2xl hover:border-pink-300 hover:bg-pink-50 focus:outline-none focus:ring-2 focus:ring-pink-400 font-medium text-gray-700 text-lg shadow-sm";
+                btn.innerHTML = formatText(answer.text, false);
+                btn.onclick = () => handleAnswer(btn, answer, q.hint);
+                answersContainer.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(btn, answer, questionHint) {
+            if (answeredCorrectly) return; 
+
+            const allBtns = answersContainer.querySelectorAll('button');
+            
+            if (answer.correct) {
+                // לוגיקה לתשובה נכונה
+                answeredCorrectly = true;
+                score += 10;
+                scoreDisplay.innerText = `ניקוד: ${score}`;
+                
+                // עיצוב הכפתור
+                btn.classList.remove('bg-white', 'border-pink-100', 'hover:border-pink-300', 'hover:bg-pink-50');
+                btn.classList.add('bg-green-100', 'border-green-400', 'text-green-800');
+                
+                // נטרול כל הכפתורים
+                allBtns.forEach(b => b.disabled = true);
+
+                // הצגת משוב הצלחה ומעבר אוטומטי
+                showFeedback(true, formatText("נָכוֹן מְאוֹד! 🌸", false), formatText(answer.rationale, false));
+                
+                // מעבר אוטומטי מהיר יותר - 1.5 שניות (1500ms)
+                autoAdvanceTimeout = setTimeout(() => {
+                    advanceToNextQuestion();
+                }, 1500);
+                
+            } else {
+                // לוגיקה לתשובה שגויה
+                btn.classList.remove('bg-white', 'border-pink-100', 'hover:border-pink-300', 'hover:bg-pink-50');
+                btn.classList.add('bg-red-50', 'border-red-200', 'text-red-700', 'opacity-80');
+                
+                // נטרול הכפתור השגוי בלבד
+                btn.disabled = true;
+
+                // הצגת רמז עם עיצוב הניקוד המתאים
+                const hintText = `<b>${formatText("רֶמֶז:", false)}</b> ${formatText(questionHint, false)} <br> ${formatText("נַסּוּ לִבְחוֹר תְּשׁוּבָה אַחֶרֶת.", false)}`;
+                showFeedback(false, formatText("לֹא בְּדִיּוּק... 🍂", false), hintText);
+            }
+        }
+
+        function showFeedback(isSuccess, title, text) {
+            feedbackArea.classList.remove('hidden', 'bg-green-50', 'border-green-300', 'bg-red-50', 'border-red-200');
+            feedbackIcon.innerText = isSuccess ? '🌺' : '🥀';
+            
+            if (isSuccess) {
+                feedbackArea.classList.add('bg-green-50', 'border-green-300', 'text-green-900');
+                feedbackTitle.innerText = title;
+                feedbackText.innerHTML = text + `<br><span class='text-sm opacity-75 mt-3 block font-bold'>${formatText("עוֹבֵר אוֹטוֹמָטִית לַשְּׁאֵלָה הַבָּאָה... ⏳", false)}</span>`;
+            } else {
+                feedbackArea.classList.add('bg-orange-50', 'border-orange-200', 'text-orange-900');
+                feedbackTitle.innerText = title;
+                feedbackText.innerHTML = text; 
+            }
+        }
+
+        function advanceToNextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                loadQuestion();
+            } else {
+                showEndScreen();
+            }
+        }
+
+        function showEndScreen() {
+            quizContainer.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+            finalScore.innerText = score;
+        }
+
+        // התחלה
+        initQuiz();
+
+    </script>
+</body>
+</html>
+
+
+
+```
